@@ -1,5 +1,7 @@
 package org.leolee.es.springdatademo;
 
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermQueryBuilder;
 import org.junit.jupiter.api.Test;
 import org.leolee.es.springdatademo.dao.ProductDao;
 import org.leolee.es.springdatademo.entity.Product;
@@ -12,8 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @SpringBootTest
@@ -99,6 +99,36 @@ public class SpringDataEsApplicationTests {
         Page<Product> all = productDao.findAll(pageRequest);
         for (Product product : all.getContent()) {
             logger.info("{}", product);
+        }
+    }
+
+    /**
+     * 功能描述: <br>
+     * 〈文档搜索〉
+     */
+    @Test
+    public void termQuery() {
+        TermQueryBuilder titleQuery = QueryBuilders.termQuery("title", "iphone11");
+        Iterable<Product> search = productDao.search(titleQuery);
+        for (Product product : search) {
+            logger.info("{}", product);
+        }
+
+        //分页&排序
+        Sort idDesc = Sort.by(Sort.Direction.DESC, "id");
+        //page-0(页码从0开始) pagesize-5
+        PageRequest pageRequest = PageRequest.of(0, 5, idDesc);
+        Page<Product> products = productDao.search(titleQuery, pageRequest);
+        for (Product p : products.getContent()) {
+            logger.info("{}", p);
+        }
+
+        Product product = new Product();
+        product.setId(10000L);
+        product.setCategory("手");
+        Page<Product> products1 = productDao.searchSimilar(product, new String[]{"category"}, pageRequest);
+        for (Product p : products1.getContent()) {
+            logger.info("{}", p);
         }
     }
 }
